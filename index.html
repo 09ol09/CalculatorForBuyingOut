@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobilstøtte Kalkulator</title>
+  <script>
+    function kalkuler() {
+      const total = 10000;
+      const mnd = 36;
+      const brukt = document.getElementById('mndBrukt').value;
+      const verdiPerMnd = total / mnd;
+      const restMnd = mnd - brukt;
+      const restBelop = verdiPerMnd * restMnd;
+
+      document.getElementById('resultat').innerHTML =
+        `<b>Etter ${brukt} måneder</b><br>
+         Gjenstående støtte: <b>${restBelop.toFixed(2)} kr</b><br>
+         (277,78 kr × ${restMnd} måneder igjen)`;
+    }
+  </script>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+      color: #111827;
+    }
+    .kalkulator {
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 2rem;
+      width: 320px;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 0.5rem;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      padding: 0.6rem 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+    button:hover { background-color: #1d4ed8; }
+    #resultat {
+      margin-top: 1rem;
+      background: #f1f5f9;
+      padding: 1rem;
+      border-radius: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="kalkulator">
+    <h2>📱 Mobilstøtte-kalkulator</h2>
+    <p>Beregn hvor mye du må betale hvis du slutter før 36 mnd.</p>
+    <label for="mndBrukt">Hvor mange måneder har du hatt telefonen?</label>
+    <input type="number" id="mndBrukt" min="0" max="36" value="6">
+    <button onclick="kalkuler()">Kalkuler</button>
+    <div id="resultat"></div>
+  </div>
+</body>
+</html>
