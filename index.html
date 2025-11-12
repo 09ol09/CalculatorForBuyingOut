@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobilstøtte Kalkulator (Oppgradert)</title>
+    <title>Mobilitetsstøtte Kalkulator (Mobil & PC)</title>
     <style>
         :root {
             --primary-color: #007bff;
@@ -13,6 +13,8 @@
             --card-bg: #ffffff;
             --border-color: #ced4da;
             --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
         }
 
         body {
@@ -32,7 +34,7 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             padding: 30px;
             width: 100%;
-            max-width: 450px; /* Gjør kalkulatoren bredere */
+            max-width: 450px;
         }
 
         h2 {
@@ -42,6 +44,37 @@
             margin-top: 0;
             font-size: 1.8rem;
         }
+
+        /* --- Tabs (Toppmeny) Stil --- */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+        .tab-button {
+            flex-grow: 1;
+            padding: 10px 0;
+            cursor: pointer;
+            font-weight: 600;
+            text-align: center;
+            border: none;
+            background: none;
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+            margin-bottom: -2px; 
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* --- Slutt Tabs Stil --- */
 
         .input-group {
             margin-bottom: 20px;
@@ -56,8 +89,8 @@
 
         input[type="number"] {
             width: 100%;
-            padding: 12px; /* Gjør tekstboksen større */
-            font-size: 1.1rem; /* Større skrift i input */
+            padding: 12px;
+            font-size: 1.1rem;
             border: 1px solid var(--border-color);
             border-radius: 8px;
             transition: border-color 0.3s;
@@ -94,7 +127,7 @@
             border-radius: 8px;
             border-left: 5px solid var(--primary-color);
             text-align: left;
-            display: none; /* Skjult som standard */
+            display: none;
         }
 
         #meldingsboks {
@@ -118,6 +151,13 @@
             content: "✓";
             margin-right: 8px;
             font-size: 1.2rem;
+        }
+        
+        .warning-text {
+            color: var(--danger-color);
+            font-weight: 600;
+            margin-top: 10px;
+            font-size: 0.9rem;
         }
 
         #klar-melding {
@@ -148,21 +188,51 @@
         .btn-copy:hover {
             background-color: #1e7e34;
         }
+        
+        .error-message {
+            color: red;
+            font-weight: 600;
+            padding: 10px;
+            border: 1px solid red;
+            background: #ffe3e3;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
     </style>
     <script>
         function formaterKrone(tall) {
             return tall.toLocaleString('no-NO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kr';
         }
 
-        function kalkuler() {
+        // --- Hovedlogikk for å bytte fane ---
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.getElementById(`btn-${tabName}`).classList.add('active');
+            
+            document.getElementById('resultat-container').style.display = 'none';
+        }
+
+
+        // --- KALKULATOR 1: MOBILSTØTTE ---
+        function kalkulerMobil() {
             const totalKost = parseFloat(document.getElementById('mobilPris').value);
             const mndBrukt = parseInt(document.getElementById('mndBrukt').value);
 
+            const resultatInnhold = document.getElementById('resultat-innhold');
             const resultatContainer = document.getElementById('resultat-container');
             const klarMeldingArea = document.getElementById('klar-melding');
+            
+            resultatContainer.style.display = 'none';
 
             if (isNaN(totalKost) || isNaN(mndBrukt) || totalKost <= 0 || mndBrukt < 0 || mndBrukt > 36) {
-                resultatContainer.innerHTML = "⚠️ Vennligst fyll inn gyldige tall. Måneder brukt kan ikke overstige 36.";
+                resultatInnhold.innerHTML = "<div class='error-message'>⚠️ Feil: Fyll inn gyldige tall. Måneder brukt (0-36).</div>";
                 resultatContainer.style.display = 'block';
                 klarMeldingArea.value = "";
                 return;
@@ -199,16 +269,18 @@
                 </p>
             `;
 
-            // --- Genererer Klar Melding for Utsendelse (den viktigste forbedringen) ---
+            // --- Genererer Klar Melding for Utsendelse ---
             const melding = `
-Hei! Her er en oppsummering av din mobilstøtte-kalkulasjon:
+Hei,
+
+Her er en oppsummering av mobilstøtte-kalkulasjonen basert på dine tall:
 
 ---
 MOBILSTØTTE OVERSIKT
 ---
 * Totalpris mobil: ${formaterKrone(totalKost)}
 * Bedriftens maksimale dekning: ${formaterKrone(maksDekning)}
-* Din egenandel (hvis pris > 10.000 kr): ${formaterKrone(egenbetaling)}
+* Din egenandel (hvis pris > ${formaterKrone(maksDekning)}): ${formaterKrone(egenbetaling)}
 
 TILBAKEBETALING VED OPPSIGELSE
 ---
@@ -223,6 +295,81 @@ Vennligst kontakt HR for bekreftelse.
             
             document.getElementById('resultat-innhold').innerHTML = htmlOppsummering;
             klarMeldingArea.value = melding;
+            document.getElementById('melding-tittel').textContent = 'Melding klar til utsendelse (Mobil)';
+            resultatContainer.style.display = 'block';
+        }
+
+
+        // --- KALKULATOR 2: PC-STØTTE (Oppdatert Logikk) ---
+        function kalkulerPC() {
+            const kjøpspris = parseFloat(document.getElementById('pcKjopspris').value);
+            const gjenbruksverdi = parseFloat(document.getElementById('pcRestverdi').value);
+            const mndBruktPC = parseInt(document.getElementById('pcMndBrukt').value);
+
+            const resultatInnhold = document.getElementById('resultat-innhold');
+            const resultatContainer = document.getElementById('resultat-container');
+            const klarMeldingArea = document.getElementById('klar-melding');
+            
+            resultatContainer.style.display = 'none';
+
+            if (isNaN(kjøpspris) || isNaN(gjenbruksverdi) || isNaN(mndBruktPC) || kjøpspris <= 0 || mndBruktPC < 0 || gjenbruksverdi < 0) {
+                resultatInnhold.innerHTML = "<div class='error-message'>⚠️ Feil: Fyll inn gyldige tall for kjøpspris, estimert gjenbruksverdi og måneder.</div>";
+                resultatContainer.style.display = 'block';
+                klarMeldingArea.value = "";
+                return;
+            }
+            
+            if (gjenbruksverdi > kjøpspris) {
+                resultatInnhold.innerHTML = "<div class='error-message'>⚠️ Feil: Estimert gjenbruksverdi kan ikke være høyere enn kjøpsprisen.</div>";
+                resultatContainer.style.display = 'block';
+                klarMeldingArea.value = "";
+                return;
+            }
+
+            // --- Genererer HTML-oppsummering ---
+            const htmlOppsummering = `
+                <p><b>💻 PC-støtte Oppsummering (Utkjøp):</b></p>
+                <ul style="list-style-type: none; padding-left: 0;">
+                    <li><b>Kjøpspris PC:</b> ${formaterKrone(kjøpspris)}</li>
+                    <li><b>Est. Gjenbruksverdi:</b> ${formaterKrone(gjenbruksverdi)}</li>
+                    <li><b>Måneder i bruk:</b> ${mndBruktPC} mnd</li>
+                </ul>
+                <hr style="border-top: 1px solid #ddd; margin: 10px 0;">
+                <p class="warning-text" style="color: var(--danger-color);">
+                    ⚠️ **UTKJØPSPRIS MÅ BEKREFTES:**
+                    <br>Den endelige utkjøpsprisen fastsettes av Simen basert på gjeldende markedsverdi.
+                </p>
+                <p style="font-size: 1.2rem; font-weight: bold; color: var(--warning-color); margin-top: 15px;">
+                    Estimert Utkjøpspris: ${formaterKrone(gjenbruksverdi)}
+                </p>
+            `;
+
+            // --- Genererer Klar Melding for Utsendelse (OPPDATERT) ---
+            const melding = `
+Hei,
+
+Her er en foreløpig oppsummering av PC-utkjøpskalkulasjonen:
+
+---
+PC-UTKJØPS OVERSIKT
+---
+* Kjøpspris PC: ${formaterKrone(kjøpspris)}
+* Estimert Gjenbruksverdi (Internt anslag): ${formaterKrone(gjenbruksverdi)}
+* Antall måneder brukt: ${mndBruktPC}
+
+VIKTIG: Utkjøpspris
+---
+Den foreløpige utkjøpsprisen er estimert til ${formaterKrone(gjenbruksverdi)}.
+
+For å få det mest korrekte anslaget med oppdaterte markedspriser, må du kontakte Simen i IT. Utkjøpet kan ikke ferdigstilles før prisen er bekreftet av Simen.
+
+Vennlig hilsen,
+[Ditt Navn / Avdeling]
+            `.trim();
+            
+            document.getElementById('resultat-innhold').innerHTML = htmlOppsummering;
+            klarMeldingArea.value = melding;
+            document.getElementById('melding-tittel').textContent = 'Melding klar til utsendelse (PC)';
             resultatContainer.style.display = 'block';
         }
 
@@ -236,24 +383,57 @@ Vennligst kontakt HR for bekreftelse.
                 knapp.textContent = 'Kopier Melding';
             }, 2000);
         }
+        
+        // --- Initiering ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Setter mobil som standardfane
+            switchTab('mobil-content');
+        });
     </script>
 </head>
 <body>
     <div class="kalkulator">
-        <h2>💼 Mobilstøtte-kalkulator</h2>
-        <p style="color: #6c757d; margin-bottom: 25px;">Maks dekning er 10.000 kr over 36 måneder. Beregn kostnader ved kjøp og avslutning.</p>
+        <h2>💼 Mobilitetsstøtte-kalkulator</h2>
+        <p style="color: #6c757d; margin-bottom: 25px;">Velg mellom Mobil (binding 36 mnd) og PC (gjenbruksverdi).</p>
 
-        <div class="input-group">
-            <label for="mobilPris">Hva koster mobiltelefonen (kr)?</label>
-            <input type="number" id="mobilPris" placeholder="Eks: 12990" value="12990">
+        <div class="tabs">
+            <button class="tab-button active" id="btn-mobil-content" onclick="switchTab('mobil-content'); kalkulerMobil();">📱 Mobil</button>
+            <button class="tab-button" id="btn-pc-content" onclick="switchTab('pc-content'); kalkulerPC();">💻 PC</button>
         </div>
 
-        <div class="input-group">
-            <label for="mndBrukt">Hvor mange måneder har du hatt telefonen (0-36)?</label>
-            <input type="number" id="mndBrukt" min="0" max="36" placeholder="Eks: 6" value="6">
+        <div id="mobil-content" class="tab-content active">
+            <div class="input-group">
+                <label for="mobilPris">Hva koster mobiltelefonen (kr)?</label>
+                <input type="number" id="mobilPris" placeholder="Eks: 12990" value="12990">
+            </div>
+
+            <div class="input-group">
+                <label for="mndBrukt">Hvor mange måneder har du hatt telefonen (0-36)?</label>
+                <input type="number" id="mndBrukt" min="0" max="36" placeholder="Eks: 6" value="6">
+            </div>
+
+            <button class="btn-primary" onclick="kalkulerMobil()">Kalkuler Mobilstøtte</button>
         </div>
 
-        <button class="btn-primary" onclick="kalkuler()">Kalkuler Støtte</button>
+        <div id="pc-content" class="tab-content">
+            <div class="input-group">
+                <label for="pcKjopspris">PC Kjøpspris (kr)</label>
+                <input type="number" id="pcKjopspris" placeholder="Eks: 25000" value="25000">
+            </div>
+
+            <div class="input-group">
+                <label for="pcRestverdi">Est. Gjenbruksverdi (Intern Anslag i kr)</label>
+                <input type="number" id="pcRestverdi" placeholder="Eks: 8000" value="8000">
+                <p style="font-size: 0.8rem; color: #6c757d; margin-top: 5px;">*Dette er et foreløpig anslag. Utkjøpspris bekreftes av Simen.</p>
+            </div>
+            
+            <div class="input-group">
+                <label for="pcMndBrukt">Hvor mange måneder har ansatt hatt PC-en?</label>
+                <input type="number" id="pcMndBrukt" min="0" placeholder="Eks: 18" value="18">
+            </div>
+
+            <button class="btn-primary" onclick="kalkulerPC()">Kalkuler PC-Utkjøp</button>
+        </div>
 
         <div id="resultat-container" style="display: none;">
             <div id="resultat-innhold"></div>
@@ -265,10 +445,5 @@ Vennligst kontakt HR for bekreftelse.
             </div>
         </div>
     </div>
-
-    <script>
-        // Kjører kalkuleringen ved lasting med standardverdier for demo
-        document.addEventListener('DOMContentLoaded', kalkuler);
-    </script>
 </body>
 </html>
