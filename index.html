@@ -1,98 +1,274 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mobilstøtte Kalkulator</title>
-  <script>
-    function kalkuler() {
-      const totalKost = parseFloat(document.getElementById('mobilPris').value);
-      const mndBrukt = parseInt(document.getElementById('mndBrukt').value);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobilstøtte Kalkulator (Oppgradert)</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --background-light: #f4f6f9;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --border-color: #ced4da;
+            --success-color: #28a745;
+        }
 
-      if (isNaN(totalKost) || isNaN(mndBrukt) || totalKost <= 0 || mndBrukt < 0 || mndBrukt > 36) {
-        document.getElementById('resultat').innerHTML = "⚠️ Fyll inn gyldige tall.";
-        return;
-      }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text-color);
+        }
 
-      const maksDekning = 10000;
-      const mndTotalt = 36;
-      const verdiPerMnd = maksDekning / mndTotalt;
-      const restMnd = mndTotalt - mndBrukt;
-      const restBelop = verdiPerMnd * restMnd;
+        .kalkulator {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 450px; /* Gjør kalkulatoren bredere */
+        }
 
-      // Beregninger
-      const egenbetaling = totalKost > maksDekning ? totalKost - maksDekning : 0;
-      const dekning = Math.min(totalKost, maksDekning);
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 0;
+            font-size: 1.8rem;
+        }
 
-      document.getElementById('resultat').innerHTML = `
-        <b>📱 Oppsummering:</b><br><br>
-        <b>Mobilpris:</b> ${totalKost.toLocaleString('no-NO')} kr<br>
-        <b>Bedriften dekker:</b> ${dekning.toLocaleString('no-NO')} kr<br>
-        <b>Du betaler nå:</b> ${egenbetaling.toLocaleString('no-NO')} kr<br><br>
-        <b>Hvis du slutter etter ${mndBrukt} måneder:</b><br>
-        Du må betale tilbake <b>${restBelop.toFixed(2)} kr</b><br>
-        (${verdiPerMnd.toFixed(2)} kr × ${restMnd} måneder igjen)
-      `;
-    }
-  </script>
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #f8fafc;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem;
-      color: #111827;
-    }
-    .kalkulator {
-      background: white;
-      border-radius: 1rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 2rem;
-      width: 340px;
-      text-align: center;
-    }
-    input {
-      width: 100%;
-      padding: 0.6rem;
-      margin: 0.5rem 0;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 0.5rem;
-    }
-    button {
-      background-color: #2563eb;
-      color: white;
-      padding: 0.6rem 1.2rem;
-      border: none;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      font-weight: 600;
-      margin-top: 0.5rem;
-    }
-    button:hover { background-color: #1d4ed8; }
-    #resultat {
-      margin-top: 1rem;
-      background: #f1f5f9;
-      padding: 1rem;
-      border-radius: 0.5rem;
-    }
-  </style>
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px; /* Gjør tekstboksen større */
+            font-size: 1.1rem; /* Større skrift i input */
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+            width: 100%;
+            font-size: 1.1rem;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        #resultat-container {
+            margin-top: 25px;
+            padding: 15px;
+            background: #f1f9ff;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary-color);
+            text-align: left;
+            display: none; /* Skjult som standard */
+        }
+
+        #meldingsboks {
+            margin-top: 20px;
+            background: #fff;
+            border: 1px dashed var(--success-color);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        #melding-tittel {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--success-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        #melding-tittel::before {
+            content: "✓";
+            margin-right: 8px;
+            font-size: 1.2rem;
+        }
+
+        #klar-melding {
+            width: 100%;
+            height: 150px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+
+        .btn-copy {
+            background-color: var(--success-color);
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+            float: right;
+            transition: background-color 0.3s;
+        }
+
+        .btn-copy:hover {
+            background-color: #1e7e34;
+        }
+    </style>
+    <script>
+        function formaterKrone(tall) {
+            return tall.toLocaleString('no-NO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kr';
+        }
+
+        function kalkuler() {
+            const totalKost = parseFloat(document.getElementById('mobilPris').value);
+            const mndBrukt = parseInt(document.getElementById('mndBrukt').value);
+
+            const resultatContainer = document.getElementById('resultat-container');
+            const klarMeldingArea = document.getElementById('klar-melding');
+
+            if (isNaN(totalKost) || isNaN(mndBrukt) || totalKost <= 0 || mndBrukt < 0 || mndBrukt > 36) {
+                resultatContainer.innerHTML = "⚠️ Vennligst fyll inn gyldige tall. Måneder brukt kan ikke overstige 36.";
+                resultatContainer.style.display = 'block';
+                klarMeldingArea.value = "";
+                return;
+            }
+
+            // Faste satser
+            const maksDekning = 10000;
+            const mndTotalt = 36;
+            
+            // Beregning
+            const verdiPerMnd = maksDekning / mndTotalt;
+            const dekning = Math.min(totalKost, maksDekning);
+            const egenbetaling = totalKost > maksDekning ? totalKost - maksDekning : 0;
+
+            // Avsluttende beregninger
+            const restMnd = Math.max(0, mndTotalt - mndBrukt);
+            const restBelop = verdiPerMnd * restMnd;
+            
+            // --- Genererer HTML-oppsummering ---
+            const htmlOppsummering = `
+                <p><b>📱 Mobilstøtte Oppsummering:</b></p>
+                <ul style="list-style-type: none; padding-left: 0;">
+                    <li><b>Totalpris Mobil:</b> ${formaterKrone(totalKost)}</li>
+                    <li style="color: ${egenbetaling > 0 ? '#dc3545' : '#28a745'};"><b>Din Egenandel:</b> ${formaterKrone(egenbetaling)}</li>
+                    <li><b>Bedriftens Dekning:</b> ${formaterKrone(dekning)}</li>
+                </ul>
+                <hr style="border-top: 1px solid #ddd; margin: 10px 0;">
+                <p><b>Ved Avslutning etter ${mndBrukt} mnd:</b></p>
+                <p style="font-size: 1.2rem; font-weight: bold; color: #ffc107;">
+                    Tilbakebetaling: ${formaterKrone(restBelop)}
+                </p>
+                <p style="font-size: 0.8rem; color: #6c757d;">
+                    (Beregnet som ${formaterKrone(verdiPerMnd)} per mnd × ${restMnd} mnd igjen)
+                </p>
+            `;
+
+            // --- Genererer Klar Melding for Utsendelse (den viktigste forbedringen) ---
+            const melding = `
+Hei! Her er en oppsummering av din mobilstøtte-kalkulasjon:
+
+---
+MOBILSTØTTE OVERSIKT
+---
+* Totalpris mobil: ${formaterKrone(totalKost)}
+* Bedriftens maksimale dekning: ${formaterKrone(maksDekning)}
+* Din egenandel (hvis pris > 10.000 kr): ${formaterKrone(egenbetaling)}
+
+TILBAKEBETALING VED OPPSIGELSE
+---
+* Antall måneder brukt: ${mndBrukt}
+* Måneder gjenstående av bindingstid (36 mnd): ${restMnd}
+
+Du må betale tilbake: ${formaterKrone(restBelop)}
+(Dette tilsvarer ${formaterKrone(verdiPerMnd)} per gjenstående måned).
+
+Vennligst kontakt HR for bekreftelse.
+            `.trim();
+            
+            document.getElementById('resultat-innhold').innerHTML = htmlOppsummering;
+            klarMeldingArea.value = melding;
+            resultatContainer.style.display = 'block';
+        }
+
+        function kopierMelding() {
+            const melding = document.getElementById('klar-melding');
+            melding.select();
+            document.execCommand('copy');
+            const knapp = document.getElementById('kopier-knapp');
+            knapp.textContent = 'Kopiert!';
+            setTimeout(() => {
+                knapp.textContent = 'Kopier Melding';
+            }, 2000);
+        }
+    </script>
 </head>
 <body>
-  <div class="kalkulator">
-    <h2>💼 Mobilstøtte-kalkulator</h2>
-    <p>Beregn hvor mye du må betale ved kjøp og eventuell avslutning.</p>
+    <div class="kalkulator">
+        <h2>💼 Mobilstøtte-kalkulator</h2>
+        <p style="color: #6c757d; margin-bottom: 25px;">Maks dekning er 10.000 kr over 36 måneder. Beregn kostnader ved kjøp og avslutning.</p>
 
-    <label for="mobilPris">Hva koster mobiltelefonen (kr)?</label>
-    <input type="number" id="mobilPris" placeholder="Eks: 12990">
+        <div class="input-group">
+            <label for="mobilPris">Hva koster mobiltelefonen (kr)?</label>
+            <input type="number" id="mobilPris" placeholder="Eks: 12990" value="12990">
+        </div>
 
-    <label for="mndBrukt">Hvor mange måneder har du hatt telefonen?</label>
-    <input type="number" id="mndBrukt" min="0" max="36" placeholder="Eks: 6">
+        <div class="input-group">
+            <label for="mndBrukt">Hvor mange måneder har du hatt telefonen (0-36)?</label>
+            <input type="number" id="mndBrukt" min="0" max="36" placeholder="Eks: 6" value="6">
+        </div>
 
-    <button onclick="kalkuler()">Kalkuler</button>
-    <div id="resultat"></div>
-  </div>
+        <button class="btn-primary" onclick="kalkuler()">Kalkuler Støtte</button>
+
+        <div id="resultat-container" style="display: none;">
+            <div id="resultat-innhold"></div>
+            
+            <div id="meldingsboks">
+                <div id="melding-tittel">Melding klar til utsendelse</div>
+                <textarea id="klar-melding" readonly></textarea>
+                <button class="btn-copy" id="kopier-knapp" onclick="kopierMelding()">Kopier Melding</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Kjører kalkuleringen ved lasting med standardverdier for demo
+        document.addEventListener('DOMContentLoaded', kalkuler);
+    </script>
 </body>
 </html>
