@@ -1,2 +1,2 @@
-# Utkj-psKalkulator
+Calc
 for å regne ut utkjaøps verdi av ansatte
